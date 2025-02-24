@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OTP Generator</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="./script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="./script.js"></script>
 </head>
 
 <body>
@@ -14,8 +14,8 @@
         <h2>OTP Verification</h2>
         
         <!-- Email Input -->
-        <label for="userEmail">Enter your email:</label>
-        <input type="email" id="userEmail" placeholder="example@mail.com" required>
+        
+        <input class="email" type="email" id="userEmail" placeholder="Enter your email" required>
         <button type="submit" id="sendOTP">Send OTP</button>
 
         <p id="emailMessage"></p>
