@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Generator</title>
+    <title>Email Verification</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="./script.js"></script>
@@ -11,37 +11,12 @@
 
 <body>
     <div class="container">
-        <h2>OTP Verification</h2>
-        
-        <!-- Email Input -->
+        <h2>Enter Your Email</h2>
         
         <input class="email" type="email" id="userEmail" placeholder="Enter your email" required>
         <button type="submit" id="sendOTP">Send OTP</button>
 
         <p id="emailMessage"></p>
-
-        <p>
-            Please type the verification code sent to <span id="emailDisplay"></span>
-        </p>
-        <p>
-            The OTP will expire in the next <span id="expire">30</span>s
-        </p>
-
-        <!-- OTP Input Fields -->
-        <div class="row">
-            <input type="number" disabled/>
-            <input type="number" disabled/>
-            <input type="number" disabled/>
-            <input type="number" disabled/>
-        </div> 
-        <button id="verifyOTP" disabled>Verify OTP</button>
-
-        <p id="responseMessage"></p>
-
-        <p>
-            Didn't receive the code? 
-            <a href="javascript:void(0)" id="resendOTP">Resend</a>
-        </p>
     </div>
 </body>
 </html>
