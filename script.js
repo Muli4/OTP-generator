@@ -1,40 +1,70 @@
 let OTP = "";
-let expireInterval = null; // Declare expireInterval variable
+let expireInterval = null;
 
-function generateOTPs(inputs, expire) {
-    OTP =
-        Math.floor(Math.random() * 10) +
-        " " +
-        Math.floor(Math.random() * 10) +
-        " " +
-        Math.floor(Math.random() * 10) +
-        " " +
-        Math.floor(Math.random() * 10);
+emailjs.init("fdBhukiJH5a0L2FUa"); // Replace with your Public Key
 
-    alert("Your OTP is: " + OTP);
+function generateOTPs(inputs, expire, userEmail) {
+    OTP = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
+
+    console.log("Generated OTP:", OTP); // Debugging
+
+    // Send OTP via EmailJS
+    emailjs.send("service_07esa9d", "template_4gyb3os", {
+        otp_code: OTP,
+        to_email: userEmail
+    })
+    .then(function(response) {
+        document.getElementById("emailMessage").innerText = "✅ OTP sent successfully to " + userEmail;
+        document.getElementById("emailMessage").style.color = "green";
+    }, function(error) {
+        document.getElementById("emailMessage").innerText = "❌ Failed to send OTP. Try again.";
+        document.getElementById("emailMessage").style.color = "red";
+    });
+
     inputs[0].focus();
     expire.innerText = 30;
-    expireInterval = setInterval(function() {
+    expireInterval = setInterval(() => {
         expire.innerText--;
-        if (expire.innerText == 0) {
+        if (expire.innerText == "0") {
             clearInterval(expireInterval);
         }
     }, 1000);
-
-    return OTP
 }
 
 function clearOTPs(inputs) {
     inputs.forEach((input) => {
         input.value = "";
+        input.setAttribute("disabled", true);
     });
+    inputs[0].removeAttribute("disabled");
+    inputs[0].focus();
     clearInterval(expireInterval);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    const inputs = document.querySelectorAll("input"),
-        button = document.querySelector("button"),
-        expire = document.querySelector("#expire");
+        emailjs.init("fdBhukiJH5a0L2FUa"); // Public Key
+        const inputs = document.querySelectorAll("input[type='number']"),
+        verifyButton = document.getElementById("verifyOTP"),
+        sendOTPButton = document.getElementById("sendOTP"),
+        resendLink = document.getElementById("resendOTP"),
+        expire = document.querySelector("#expire"),
+        emailInput = document.getElementById("userEmail"),
+        emailDisplay = document.getElementById("emailDisplay");
+
+    let userEmail = "";
+
+    sendOTPButton.addEventListener("click", () => {
+        userEmail = emailInput.value.trim();
+        if (!userEmail) {
+            document.getElementById("emailMessage").innerText = "❌ Please enter a valid email.";
+            document.getElementById("emailMessage").style.color = "red";
+            return;
+        }
+
+        emailDisplay.innerText = userEmail; // Display entered email
+        inputs.forEach(input => input.setAttribute("disabled", true)); // Disable OTP inputs
+        OTP = generateOTPs(inputs, expire, userEmail);
+    });
 
     inputs.forEach((input, index) => {
         input.addEventListener("keyup", function(e) {
@@ -54,47 +84,37 @@ document.addEventListener("DOMContentLoaded", function() {
                         prevInput.focus();
                         prevInput.value = "";
                     }
-                })
+                });
             }
 
-            // Check if the last input is not disabled and has a value
             if (!inputs[3].hasAttribute("disabled") && inputs[3].value !== "") {
-                button.classList.add("active");
+                verifyButton.removeAttribute("disabled");
             } else {
-                button.classList.remove("active"); // Remove active class if not filled
+                verifyButton.setAttribute("disabled", true);
             }
         });
     });
 
-    button.addEventListener("click", () => {
+    verifyButton.addEventListener("click", () => {
         let verify = "";
         inputs.forEach((input) => {
-            verify += input.value.trim(); // Trim whitespace from input
+            verify += input.value.trim();
         });
-        console.log("User Input:", verify); // Log the user input
-        console.log("User Input Length:", verify.length); // Log the length of the user input
-        console.log("User Input Type:", typeof verify); // Log the type of the user input
-        console.log("Generated OTP:", OTP); // Log the generated OTP
-        console.log("Generated OTP Length:", OTP.length); // Log the length of the generated OTP
-        console.log("Generated OTP Type:", typeof OTP); // Log the type of the generated OTP
 
-        OTP = OTP.replaceAll(" ", "")
+        OTP = OTP.replaceAll(" ", "");
         if (verify === OTP) {
-            alert("Verification successful");
-            clearOTPs(inputs); // Call clearOTPs with inputs parameter
+            document.getElementById("responseMessage").innerText = "✅ Verification successful!";
+            document.getElementById("responseMessage").style.color = "green";
+            clearOTPs(inputs);
         } else {
-            alert("Verification failed");
+            document.getElementById("responseMessage").innerText = "❌ Verification failed. Try again.";
+            document.getElementById("responseMessage").style.color = "red";
         }
-
-
-        console.log('Verify: '+ verify, 'OTP : ' + OTP); 
     });
-    
-    window.addEventListener("load", () => {
-        let x = prompt("Please enter your mobile number");
-        if (x) {
-            document.getElementById("mobile").innerText = x;
-            OTP = generateOTPs(inputs, expire);
+
+    resendLink.addEventListener("click", () => {
+        if (userEmail) {
+            OTP = generateOTPs(inputs, expire, userEmail);
         }
     });
 });
