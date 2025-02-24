@@ -1,28 +1,38 @@
-let OTP = "";
 let expireInterval = null;
-
 emailjs.init("fdBhukiJH5a0L2FUa"); // Replace with your Public Key
 
 function generateOTPs(inputs, expire, userEmail) {
-    OTP = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
-
+    let OTP = Math.floor(1000 + Math.random() * 9000).toString(); // Generate OTP
     console.log("Generated OTP:", OTP); // Debugging
 
+    // Store OTP in localStorage for verification
+    localStorage.setItem(userEmail, OTP);
+
     // Send OTP via EmailJS
-    emailjs.send("service_07esa9d", "template_4gyb3os", {
-        otp_code: OTP,
-        to_email: userEmail
+    emailjs.send("service_07esa9d", "template_h2q7mxr", {
+        otp_code: OTP,      
+        to_email: userEmail 
     })
     .then(function(response) {
+        console.log("Email sent successfully:", response);
         document.getElementById("emailMessage").innerText = "✅ OTP sent successfully to " + userEmail;
         document.getElementById("emailMessage").style.color = "green";
+
+        // ✅ Enable OTP input fields after sending OTP
+        inputs.forEach(input => {
+            input.removeAttribute("disabled");
+            input.value = "";
+        });
+        inputs[0].focus(); // Focus on the first input field
+
     }, function(error) {
+        console.log("Email failed to send:", error);
         document.getElementById("emailMessage").innerText = "❌ Failed to send OTP. Try again.";
         document.getElementById("emailMessage").style.color = "red";
     });
 
-    inputs[0].focus();
     expire.innerText = 30;
+    clearInterval(expireInterval);
     expireInterval = setInterval(() => {
         expire.innerText--;
         if (expire.innerText == "0") {
@@ -30,6 +40,7 @@ function generateOTPs(inputs, expire, userEmail) {
         }
     }, 1000);
 }
+
 
 function clearOTPs(inputs) {
     inputs.forEach((input) => {
@@ -42,14 +53,13 @@ function clearOTPs(inputs) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-        emailjs.init("fdBhukiJH5a0L2FUa"); // Public Key
-        const inputs = document.querySelectorAll("input[type='number']"),
-        verifyButton = document.getElementById("verifyOTP"),
-        sendOTPButton = document.getElementById("sendOTP"),
-        resendLink = document.getElementById("resendOTP"),
-        expire = document.querySelector("#expire"),
-        emailInput = document.getElementById("userEmail"),
-        emailDisplay = document.getElementById("emailDisplay");
+    const inputs = document.querySelectorAll("input[type='number']"),
+          verifyButton = document.getElementById("verifyOTP"),
+          sendOTPButton = document.getElementById("sendOTP"),
+          resendLink = document.getElementById("resendOTP"),
+          expire = document.querySelector("#expire"),
+          emailInput = document.getElementById("userEmail"),
+          emailDisplay = document.getElementById("emailDisplay");
 
     let userEmail = "";
 
@@ -62,50 +72,64 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         emailDisplay.innerText = userEmail; // Display entered email
-        inputs.forEach(input => input.setAttribute("disabled", true)); // Disable OTP inputs
-        OTP = generateOTPs(inputs, expire, userEmail);
+        generateOTPs(inputs, expire, userEmail);
+
+        // Enable OTP input fields after sending OTP
+        inputs.forEach(input => {
+            input.removeAttribute("disabled");
+            input.value = ""; // Clear old values
+        });
+        inputs[0].focus(); // Focus on the first input field
     });
 
+    // ✅ Allow only one digit per input and move to the next field
     inputs.forEach((input, index) => {
-        input.addEventListener("keyup", function(e) {
-            const currentInput = input,
-                nextInput = input.nextElementSibling,
-                prevInput = input.previousElementSibling;
+        input.addEventListener("input", function(e) {
+            this.value = this.value.replace(/[^0-9]/g, "").slice(0, 1); // Allow only 1 digit
 
-            if (nextInput && nextInput.hasAttribute("disabled") && currentInput.value !== "") {
-                nextInput.removeAttribute("disabled");
-                nextInput.focus();
+            if (this.value !== "" && index < inputs.length - 1) {
+                inputs[index + 1].removeAttribute("disabled");
+                inputs[index + 1].focus();
             }
 
-            if (e.key == "Backspace") {
-                inputs.forEach((input, index1) => {
-                    if (index <= index1 && prevInput) {
-                        input.setAttribute("disabled", true);
-                        prevInput.focus();
-                        prevInput.value = "";
-                    }
-                });
-            }
+            checkOTPCompletion();
+        });
 
-            if (!inputs[3].hasAttribute("disabled") && inputs[3].value !== "") {
-                verifyButton.removeAttribute("disabled");
-            } else {
-                verifyButton.setAttribute("disabled", true);
+        input.addEventListener("keydown", function(e) {
+            if (e.key === "Backspace" && index > 0 && this.value === "") {
+                inputs[index - 1].focus(); // Move focus to the previous input on Backspace
             }
         });
     });
+
+    function checkOTPCompletion() {
+        let isComplete = true;
+        inputs.forEach(input => {
+            if (input.value.trim() === "") {
+                isComplete = false;
+            }
+        });
+
+        if (isComplete) {
+            verifyButton.removeAttribute("disabled");
+        } else {
+            verifyButton.setAttribute("disabled", true);
+        }
+    }
 
     verifyButton.addEventListener("click", () => {
-        let verify = "";
-        inputs.forEach((input) => {
-            verify += input.value.trim();
+        let enteredOTP = "";
+        inputs.forEach(input => {
+            enteredOTP += input.value.trim();
         });
 
-        OTP = OTP.replaceAll(" ", "");
-        if (verify === OTP) {
+        const storedOTP = localStorage.getItem(userEmail);
+
+        if (enteredOTP === storedOTP) {
             document.getElementById("responseMessage").innerText = "✅ Verification successful!";
             document.getElementById("responseMessage").style.color = "green";
             clearOTPs(inputs);
+            localStorage.removeItem(userEmail);
         } else {
             document.getElementById("responseMessage").innerText = "❌ Verification failed. Try again.";
             document.getElementById("responseMessage").style.color = "red";
@@ -114,7 +138,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     resendLink.addEventListener("click", () => {
         if (userEmail) {
-            OTP = generateOTPs(inputs, expire, userEmail);
+            generateOTPs(inputs, expire, userEmail);
         }
     });
 });
+
